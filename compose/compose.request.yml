@@ -19,7 +19,7 @@ x-restart: &restart
 services:
   # ── Media Request Portal (Musicseerr) ─────────────────────────────────
   musicseerr:
-    image: fallenbagel/musicseerr:latest
+    image: musicseerr/musicseerr:latest
     <<: [*restart, *logging]
     ports:
       - "5055:5055"
