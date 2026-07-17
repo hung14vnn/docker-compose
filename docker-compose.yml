@@ -1,0 +1,127 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=nordvpn
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${PRIVATE_KEY}
+      - SERVER_COUNTRIES=United States
+      - TZ=Asia/Ho_Chi_Minh
+    ports:
+      - 8085:8085
+      - 9696:9696
+      - 6767:6767
+      - 8686:8686
+      - 5030:5030
+      - 5000:5000
+      - 22000:22000
+      - 22000:22000/udp
+    volumes:
+      - ./gluetun:/gluetun
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Ho_Chi_Minh
+      - WEBUI_PORT=8085
+    volumes:
+      - ./qbittorrent:/config
+      - ./downloads:/downloads
+    depends_on:
+      - gluetun
+
+  slskd:
+    image: slskd/slskd:latest
+    container_name: slskd
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Ho_Chi_Minh
+      - SLSKD_REMOTE_CONFIGURATION=true
+    volumes:
+      - ./slskd:/app
+      - ./downloads:/downloads
+    depends_on:
+      - gluetun
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr
+    container_name: prowlarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./prowlarr:/config
+    depends_on:
+      - gluetun
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr
+    container_name: lidarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./lidarr:/config
+      - ./downloads:/downloads
+      - ./music:/music
+    depends_on:
+      - gluetun
+
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    network_mode: "service:gluetun"
+    environment:
+      - ND_SCANSCHEDULE=1h
+      - ND_LOGLEVEL=info
+      - ND_SESSIONTIMEOUT=24h
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./navidrome:/data
+      - ./music:/music:ro
+    depends_on:
+      - gluetun
+
+  musicseerr:
+    image: fallenbagel/musicseerr:latest
+    container_name: musicseerr
+    network_mode: "service:gluetun"
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./musicseerr:/app/config
+    depends_on:
+      - gluetun
+
+  soularr:
+    image: mrusse08/soularr:latest
+    container_name: soularr
+    network_mode: "service:gluetun"
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+      - SCRIPT_INTERVAL=300
+      - DOWNLOAD_DIR=/downloads
+      - SLSKD_URL=http://localhost:5030
+      - LIDARR_URL=http://localhost:8686
+      - LIDARR_API_KEY=${LIDARR_API_KEY}
+    volumes:
+      - ./soularr/config:/data
+      - ./downloads:/downloads
+    depends_on:
+      - slskd
+      - lidarr
