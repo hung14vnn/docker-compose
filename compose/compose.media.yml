@@ -49,7 +49,7 @@ services:
 
   # ── Soulseek ↔ Lidarr Bridge (Soularr) ───────────────────────────────
   soularr:
-    image: ghcr.io/soularr/soularr:latest
+    image: mrusse08/soularr:latest
     <<: [*restart, *logging]
     environment:
       - LIDARR_URL=http://lidarr:8686
