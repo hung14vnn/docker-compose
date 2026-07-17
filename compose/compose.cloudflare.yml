@@ -1,0 +1,41 @@
+# =============================================================================
+# Cloudflare Tunnel (optional)
+# =============================================================================
+# Exposes Navidrome (and optionally other services) through Cloudflare
+# Zero Trust Tunnel — no open ports required on your firewall.
+#
+#   docker compose -f compose/compose.yml -f compose/compose.media.yml \
+#     -f compose/compose.cloudflare.yml up -d
+# =============================================================================
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: 3
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  # ── Cloudflare Tunnel ─────────────────────────────────────────────────
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    <<: [*restart, *logging]
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    networks:
+      - media
+    depends_on:
+      navidrome:
+        condition: service_started
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /home/nonroot/.cloudflared

@@ -1,0 +1,65 @@
+# =============================================================================
+# Reverse Proxy (Caddy)
+# =============================================================================
+# Routes external requests by domain to internal services.
+# Automatic SSL via Let's Encrypt (HTTP-01 or Cloudflare DNS-01).
+#
+# Usage:
+#   docker compose -f compose/compose.yml -f compose/compose.proxy.yml \
+#     -f compose/compose.vpn.yml -f compose/compose.download.yml \
+#     -f compose/compose.media.yml -f compose/compose.request.yml up -d
+# =============================================================================
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: 3
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  # ── Reverse Proxy (Caddy) ─────────────────────────────────────────────
+  caddy:
+    image: caddy:latest
+    <<: [*restart, *logging]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      CADDY_EMAIL: ${CADDY_EMAIL}
+      CF_API_TOKEN: ${CF_API_TOKEN:-}
+      CLOUDFLARE_API_TOKEN: ${CF_API_TOKEN:-}
+    volumes:
+      - ${CONFIG_DIR:-./config}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${CONFIG_DIR:-./config}/caddy/data:/data
+    networks:
+      - vpn
+      - internal
+      - media
+    depends_on:
+      lidarr:
+        condition: service_started
+      prowlarr:
+        condition: service_started
+      navidrome:
+        condition: service_started
+      musicseerr:
+        condition: service_started
+      slskd:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp

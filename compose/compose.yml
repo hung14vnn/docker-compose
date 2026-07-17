@@ -1,0 +1,54 @@
+# =============================================================================
+# Media Stack — Base Configuration
+# =============================================================================
+# Usage:
+#   docker compose -f compose/compose.yml -f compose/compose.vpn.yml \
+#     -f compose/compose.download.yml -f compose/compose.media.yml \
+#     -f compose/compose.request.yml up -d
+# =============================================================================
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: 3
+
+x-restart: &restart
+  restart: unless-stopped
+
+x-healthcheck: &healthcheck
+  healthcheck:
+    test: ["CMD-SHELL", "exit 0"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 15s
+
+x-puid: &puid
+  environment:
+    PUID: ${PUID:-1000}
+    PGID: ${PGID:-1000}
+    TZ: ${TZ:-UTC}
+
+# ── Networks ─────────────────────────────────────────────────────────────────
+networks:
+  vpn:
+    driver: bridge
+    internal: false
+  internal:
+    driver: bridge
+    internal: true
+  media:
+    driver: bridge
+
+# ── Volumes ─────────────────────────────────────────────────────────────────
+volumes:
+  gluetun:
+  qbittorrent:
+  prowlarr:
+  lidarr:
+  slskd:
+  soularr:
+  navidrome:
+  musicseerr:

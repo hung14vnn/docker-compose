@@ -1,0 +1,46 @@
+# =============================================================================
+# Request / Discovery Services
+# =============================================================================
+#   docker compose -f compose/compose.yml -f compose/compose.vpn.yml \
+#     -f compose/compose.download.yml -f compose/compose.media.yml \
+#     -f compose/compose.request.yml up -d
+# =============================================================================
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: 3
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  # ── Media Request Portal (Musicseerr) ─────────────────────────────────
+  musicseerr:
+    image: fallenbagel/musicseerr:latest
+    <<: [*restart, *logging]
+    ports:
+      - "5055:5055"
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - ${CONFIG_DIR:-./config}/musicseerr:/app/config
+    networks:
+      - internal
+    depends_on:
+      lidarr:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5055/health > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp

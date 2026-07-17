@@ -1,0 +1,76 @@
+# =============================================================================
+# Caddy Reverse Proxy Configuration
+# =============================================================================
+# Uses environment variables injected by Docker Compose:
+#   DOMAIN, CADDY_EMAIL, CF_API_TOKEN
+#
+# Cloudflare DNS-01 challenge is used when CF_API_TOKEN is set (recommended).
+# Falls back to HTTP-01 (port 80 must be publicly reachable).
+# =============================================================================
+
+{
+  email {$CADDY_EMAIL}
+  admin off
+  ocsp_stapling on
+  compression zstd gzip
+
+  acme_dns cloudflare {$CF_API_TOKEN}
+}
+
+# ── Root redirect ──────────────────────────────────────────────────────────
+{$DOMAIN} {
+  redir https://navidrome.{$DOMAIN}{uri} permanent
+}
+
+# ── Music Streaming ────────────────────────────────────────────────────────
+navidrome.{$DOMAIN} {
+  reverse_proxy navidrome:4533
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+}
+
+# ── Media Requests (public) ────────────────────────────────────────────────
+requests.{$DOMAIN} {
+  reverse_proxy musicseerr:5055
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+  }
+}
+
+# ── Music Management (admin) ───────────────────────────────────────────────
+lidarr.{$DOMAIN} {
+  reverse_proxy lidarr:8686
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+  }
+}
+
+# ── Indexer Management (admin) ─────────────────────────────────────────────
+prowlarr.{$DOMAIN} {
+  reverse_proxy prowlarr:9696
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+  }
+}
+
+# ── Soulseek Web UI (admin) ────────────────────────────────────────────────
+slskd.{$DOMAIN} {
+  reverse_proxy slskd:5030
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+  }
+}
+
+# ── Torrent Web UI (admin) ─────────────────────────────────────────────────
+qb.{$DOMAIN} {
+  reverse_proxy gluetun:8080
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+  }
+}

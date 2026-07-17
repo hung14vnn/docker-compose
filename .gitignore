@@ -1,0 +1,24 @@
+# Environment
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Docker
+config/*/data/
+config/caddy/data/
+
+# Logs
+*.log
+
+# Temp
+/tmp/
