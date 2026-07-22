@@ -31,18 +31,17 @@ x-puid: &puid
     PGID: ${PGID:-1000}
     TZ: ${TZ:-UTC}
 
-# ── Networks ─────────────────────────────────────────────────────────────────
+# ── Networks ───────────────────────────────────────────────────────────�[...]
 networks:
   vpn:
     driver: bridge
     internal: false
   internal:
     driver: bridge
-    internal: true
   media:
     driver: bridge
 
-# ── Volumes ─────────────────────────────────────────────────────────────────
+# ── Volumes ───────────────────────────────────────────────────────────��[...]
 volumes:
   gluetun:
   qbittorrent:
