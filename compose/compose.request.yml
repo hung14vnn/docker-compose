@@ -22,7 +22,7 @@ services:
     image: ghcr.io/habirabbu/droppedneedle:latest
     <<: [*restart, *logging]
     ports:
-      - "5055:5055"
+      - "8688:8688"
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
